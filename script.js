@@ -1,66 +1,112 @@
-var models = [
-    {
-        name : 'Bmw 418d',
-        image : 'img/bmw.jpg',
-        link : 'http://www.arabalar.com.tr/bmw/4-serisi/2018/418d-2-0-gran-coupe'
-    },
-    {
-        name : 'Mazda CX-3',
-        image : 'img/mazda.jpg',
-        link : 'http://www.arabalar.com.tr/mazda/cx-3/2017/1-5-sky-d-motion'
-    },
-    {
-        name : 'Volvo S60',
-        image : 'img/volvo.jpg',
-        link : 'http://www.arabalar.com.tr/volvo/s60/2018/1-5-t3-advance'
-    },
-    {
-        name : 'Skoda Superb',
-        image : 'img/skoda.jpg',
-        link : 'http://www.arabalar.com.tr/skoda/superb/2018/1-4-tsi-active'
-    },
-    {
-        name : 'Honda Civic',
-        image : 'img/honda.jpg',
-        link : 'http://www.arabalar.com.tr/honda/civic/2018/1-6-elegance'
-    }
-];
+const quiz = new Quiz(sorular);
+const ui = new UI();
 
-var index = 0;
-var slaytCount = models.length;
-
-showSlide(index);
-
-document.querySelector('.fa-arrow-circle-left').addEventListener('click',function(){
-    index--;
-    showSlide(index);
-    console.log(index);
+ui.btn_start.addEventListener("click", function() {
+    ui.quiz_box.classList.add("active");
+    startTimer(10);
+    startTimerLine();
+    ui.soruGoster(quiz.soruGetir());
+    ui.soruSayisiniGoster(quiz.soruIndex + 1, quiz.sorular.length);
+    ui.btn_next.classList.remove("show");
 });
 
-document.querySelector('.fa-arrow-circle-right').addEventListener('click',function(){
-    index++;
-    showSlide(index);
-    console.log(index);    
+ui.btn_next.addEventListener("click", function() {
+    if (quiz.sorular.length != quiz.soruIndex + 1) {
+        quiz.soruIndex += 1;
+        clearInterval(counter);
+        clearInterval(counterLine);
+        startTimer(10);
+        startTimerLine();
+        ui.soruGoster(quiz.soruGetir());
+        ui.soruSayisiniGoster(quiz.soruIndex + 1, quiz.sorular.length);
+        ui.btn_next.classList.remove("show");
+    } else {
+        clearInterval(counter);
+        clearInterval(counterLine);
+        ui.quiz_box.classList.remove("active");
+        ui.score_box.classList.add("active");
+        ui.skoruGoster(quiz.sorular.length, quiz.dogruCevapSayisi);
+    }
+});
+
+ui.btn_quit.addEventListener("click", function() {
+    window.location.reload();
+});
+
+ui.btn_replay.addEventListener("click", function() {
+    quiz.soruIndex = 0;
+    quiz.dogruCevapSayisi = 0;
+    ui.btn_start.click();
+    ui.score_box.classList.remove("active");
 });
 
 
-function showSlide(i){
+function optionSelected(option) {
+    clearInterval(counter);
+    clearInterval(counterLine);
+    let cevap = option.querySelector("span b").textContent;
+    let soru = quiz.soruGetir();
 
-    index = i;
-
-    if (i<0) {
-        index = slaytCount - 1;
+    if(soru.cevabiKontrolEt(cevap)) {
+        quiz.dogruCevapSayisi += 1;
+        option.classList.add("correct");
+        option.insertAdjacentHTML("beforeend", ui.correctIcon);
+    } else {
+        option.classList.add("incorrect");
+        option.insertAdjacentHTML("beforeend", ui.incorrectIcon);
     }
-    if(i >= slaytCount){
-        index =0;
+
+    for(let i=0; i < ui.option_list.children.length; i++) {
+        ui.option_list.children[i].classList.add("disabled");
     }
 
-    document.querySelector('.card-title').textContent = models[index].name;
-
-    document.querySelector('.card-img-top').setAttribute('src',models[index].image);
-    
-    document.querySelector('.card-link').setAttribute('href',models[index].link);
+    ui.btn_next.classList.add("show");
 }
 
+let counter;
+function startTimer(time) {
+    counter = setInterval(timer, 1000);
+
+    function timer() {
+        ui.time_second.textContent = time;
+        time--;
+
+        if(time < 0) {
+            clearInterval(counter);
+
+            ui.time_text.textContent = "Vaxt bitdi";
+
+            let cevap = quiz.soruGetir().dogruCevap;
+
+            for(let option of ui.option_list.children) {
+
+                if(option.querySelector("span b").textContent == cevap) {
+                    option.classList.add("correct");
+                    option.insertAdjacentHTML("beforeend", ui.correctIcon);
+                }
+
+                option.classList.add("disabled");
+            }
+
+            ui.btn_next.classList.add("show");
+        }
+    }
+}
+
+let counterLine;
+function startTimerLine() {
+    let line_width = 0;
+
+    counterLine = setInterval(timer, 20);
+
+    function timer() {
+        line_width += 1;
+        ui.time_line.style.width = line_width + "px";
+
+        if(line_width > 549) {
+            clearInterval(counterLine);
+        }
+    }
+}
 
 
